@@ -17,6 +17,12 @@
 // solution, we wouldn't have that clear indication for the structure of network, but
 // we would have various hints based on what we want to model.
 
+// When created, this structure is not just valid for XOR, but also for AND, OR, etc. ie.
+// we can use it to train network to represent those logic functions (and many others).
+
+// In other words, our program defines a general machine that we can load (program) with
+// data. By injecting data, we are constructing specific machine.
+
 #define model_param_num(model) (sizeof(model)/sizeof(float))
 #define model_param_ptr(model, idx) (((float*)&(model)) + idx)
 #define model_param_val(model, idx) (*(((float*)&(model)) + idx))
