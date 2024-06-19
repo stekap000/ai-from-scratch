@@ -99,6 +99,31 @@ void print_xor(Xor m) {
 	printf("and_b   = %f\n", m.and_b);
 }
 
+void print_xor_logic_functions(Xor m) {
+	printf("Model:\n");
+	for(size_t i = 0; i < train_count; ++i) {
+		int x1 = train[i][0];
+		int x2 = train[i][1];
+		float v = forward(m, x1, x2);
+		printf("\t%d XOR %d = %f\n", x1, x2, v);
+	}
+	printf("Neuron 1:\n");
+	for(size_t i = 0; i < train_count; ++i) {
+		float v = sigmoidf(m.or_w1 * train[i][0] + m.or_w2 * train[i][1] + m.or_b);
+		printf("\t%d | %d = %f\n", (int)train[i][0], (int)train[i][1], v);
+	}
+	printf("Neuron 2:\n");
+	for(size_t i = 0; i < train_count; ++i) {
+		float v = sigmoidf(m.nand_w1 * train[i][0] + m.nand_w2 * train[i][1] + m.nand_b);
+		printf("\t%d | %d = %f\n", (int)train[i][0], (int)train[i][1], v);
+	}
+	printf("Neuron 3:\n");
+	for(size_t i = 0; i < train_count; ++i) {
+		float v = sigmoidf(m.and_w1 * train[i][0] + m.and_w2 * train[i][1] + m.and_b);
+		printf("\t%d | %d = %f\n", (int)train[i][0], (int)train[i][1], v);
+	}
+}
+
 Xor model_gradient(Xor m, float eps) {
 	Xor g;
 	float c = cost(m);
@@ -141,12 +166,7 @@ int main(void) {
 	print_xor(m);
 	printf("cost = %f\n\n", cost(m));
 
-	for(size_t i = 0; i < train_count; ++i) {
-		int x1 = train[i][0];
-		int x2 = train[i][1];
-		float v = forward(m, x1, x2);
-		printf("%d XOR %d = %f\n", x1, x2, v);
-	}
+	print_xor_logic_functions(m);
 	
 	return 0;
 }
