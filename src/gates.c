@@ -26,7 +26,7 @@ float nand_train[][3] = {
 	{1, 1, 0},
 };
 
-float or_train[][3] = {
+float nor_train[][3] = {
 	{0, 0, 0},
 	{0, 1, 1},
 	{1, 0, 1},
