@@ -3,15 +3,38 @@
 #include <time.h>
 #include <math.h>
 
-#define array_size(arr) sizeof(arr)/sizeof(arr[0])
+typedef float sample[3];
 
-// OR gate
-float train[][3] = {
+float and_train[][3] = {
+	{0, 0, 0},
+	{0, 1, 0},
+	{1, 0, 0},
+	{1, 1, 1},
+};
+
+float or_train[][3] = {
 	{0, 0, 0},
 	{0, 1, 1},
 	{1, 0, 1},
 	{1, 1, 1},
 };
+
+float nand_train[][3] = {
+	{0, 0, 1},
+	{0, 1, 1},
+	{1, 0, 1},
+	{1, 1, 0},
+};
+
+float or_train[][3] = {
+	{0, 0, 0},
+	{0, 1, 1},
+	{1, 0, 1},
+	{1, 1, 1},
+};
+
+sample *train = nand_train;
+size_t train_count = 4;
 
 float sigmoidf(float x) {
 	return 1.f / (1.f + expf(-x));
@@ -19,7 +42,7 @@ float sigmoidf(float x) {
 
 float cost(float w1, float w2, float b) {
 	float result = 0.0f;
-	for(size_t i = 0; i < array_size(train); ++i) {
+	for(size_t i = 0; i < train_count; ++i) {
 		float x1 = train[i][0];
 		float x2 = train[i][1];
 		float y = sigmoidf(w1*x1 + w2*x2 + b);
@@ -27,7 +50,7 @@ float cost(float w1, float w2, float b) {
 		result += d*d;
 	}
 
-	result /= array_size(train);
+	result /= train_count;
 	return result;
 }
 
