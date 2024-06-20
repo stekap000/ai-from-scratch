@@ -1,0 +1,10 @@
+#ifndef NEURAL_H
+#define NEURAL_H
+
+
+
+#endif // NEURAL_H
+
+#ifdef NEURAL_IMPLEMENTATION
+
+#endif // NEURAL_IMPLEMENTATION
