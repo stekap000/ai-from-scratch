@@ -1,13 +1,13 @@
 #ifndef NEURAL_H
 #define NEURAL_H
 
-#include <assert.h>
-
 #ifndef NEURAL_ASSERT
+#include <assert.h>
 #define NEURAL_ASSERT(cond) assert(cond)
 #endif
 
 #ifndef NEURAL_MALLOC
+#include <stdlib.h>
 #define NEURAL_MALLOC malloc
 #endif
 
@@ -30,6 +30,7 @@ void matrix_print(Matrix a);
 
 Matrix matrix_alloc(int rows, int cols) {
 	NEURAL_NOT_IMPLEMENTED("");
+	
 }
 
 void matrix_add(Matrix a, Matrix b, Matrix *result) {
