@@ -50,6 +50,20 @@ void matrix_print(Matrix a);
 
 void matrix_vector_mul(Matrix a, Vector v, Vector *result);
 
+/*
+Layer model:
+[previous_layer_output_vector] *
+|w0 w1 w2 ... size(previous_layer_output_vector)|
+|...                                            |
+|...                                            |
+|size(current_layer_vector)                     | +
+[biases (one for each neuron in current layer)]
+
+Short description:
+current_layer_output_vector = activation(input_later_output_vector*weights + biases)
+activation(W*A + B)
+*/
+
 #endif // NEURAL_H
 
 #ifdef NEURAL_IMPLEMENTATION
