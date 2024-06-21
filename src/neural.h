@@ -28,30 +28,46 @@
 #define NEURAL_REAL_PRINT_TYPE "%.4f"
 #endif
 
-// Cols first.
+typedef struct {
+	int n;
+	Neural_Real* elements;
+} Vector;
+
+// Rows first, for now.
 typedef struct {
 	int rows;
 	int cols;
 	Neural_Real* elements;
 } Matrix;
 
-typedef struct {
-	int n;
-	Neural_Real* elements;
-} Vector;
+Vector vector_alloc(int n);
+void vector_print(Vector v);
 
 Matrix matrix_alloc(int rows, int cols);
 void matrix_add(Matrix a, Matrix b, Matrix *result);
 void matrix_mul(Matrix a, Matrix b, Matrix *result);
-void matrix_apply(Matrix a, Vector v, Vector *result);
 void matrix_print(Matrix a);
 
-Vector vector_alloc(int n);
-void vector_print(Vector v);
+void matrix_vector_mul(Matrix a, Vector v, Vector *result);
 
 #endif // NEURAL_H
 
 #ifdef NEURAL_IMPLEMENTATION
+
+Vector vector_alloc(int n) {
+	return (Vector) {
+		.n = n,
+		.elements = malloc(n*sizeof(Neural_Real))
+	};	
+}
+
+void vector_print(Vector v) {
+	printf("[\n");
+	for(int i = 0; i < v.n; ++i) {
+		printf("\t"NEURAL_REAL_PRINT_TYPE", ", v.elements[i]);
+	}
+	printf("]\n");
+}
 
 Matrix matrix_alloc(int rows, int cols) {
 	return (Matrix) {
@@ -72,11 +88,6 @@ void matrix_mul(Matrix a, Matrix b, Matrix *result) {
 	NEURAL_NOT_IMPLEMENTED("");
 }
 
-void matrix_apply(Matrix a, Vector v, Vector *result) {
-	NEURAL_NOT_IMPLEMENTED("");
-	
-}
-
 void matrix_print(Matrix a) {
 	printf("[\n");
 	for(int i = 0; i < a.rows; ++i) {
@@ -88,19 +99,17 @@ void matrix_print(Matrix a) {
 	printf("]\n");
 }
 
-Vector vector_alloc(int n) {
-	return (Vector) {
-		.n = n,
-		.elements = malloc(n*sizeof(Neural_Real))
-	};	
-}
-
-void vector_print(Vector v) {
-	printf("[\n");
-	for(int i = 0; i < v.n; ++i) {
-		printf("\t"NEURAL_REAL_PRINT_TYPE", ", v.elements[i]);
+void matrix_vector_mul(Matrix a, Vector v, Vector *result) {
+	NEURAL_NOT_IMPLEMENTED("");
+	// Current assumption is that dimensions match for matrix vector multiplication.
+	float temp = 0;
+	for(int i = 0; i < a.rows; ++i) {
+		temp = 0;
+		for(int j = 0; j < a.cols; ++j) {
+			temp += a.elements[i*a.cols + j] * v.elements[j];
+		}
+		result->elements[i] = temp;
 	}
-	printf("]\n");	
 }
 
 #endif // NEURAL_IMPLEMENTATION
