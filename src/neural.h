@@ -28,16 +28,26 @@
 #define NEURAL_REAL_PRINT_TYPE "%.4f"
 #endif
 
+// Cols first.
 typedef struct {
 	int rows;
 	int cols;
 	Neural_Real* elements;
 } Matrix;
 
+typedef struct {
+	int n;
+	Neural_Real* elements;
+} Vector;
+
 Matrix matrix_alloc(int rows, int cols);
 void matrix_add(Matrix a, Matrix b, Matrix *result);
 void matrix_mul(Matrix a, Matrix b, Matrix *result);
+void matrix_apply(Matrix a, Vector v, Vector *result);
 void matrix_print(Matrix a);
+
+Vector vector_alloc(int n);
+void vector_print(Vector v);
 
 #endif // NEURAL_H
 
@@ -52,11 +62,19 @@ Matrix matrix_alloc(int rows, int cols) {
 }
 
 void matrix_add(Matrix a, Matrix b, Matrix *result) {
-	NEURAL_NOT_IMPLEMENTED("");
+	// Current assumption is that dimensions match for addition.
+   	for(int i = 0; i < result->rows * result->cols; ++i) {
+		result->elements[i] = a.elements[i] + b.elements[i];
+	}
 }
 
 void matrix_mul(Matrix a, Matrix b, Matrix *result) {
 	NEURAL_NOT_IMPLEMENTED("");
+}
+
+void matrix_apply(Matrix a, Vector v, Vector *result) {
+	NEURAL_NOT_IMPLEMENTED("");
+	
 }
 
 void matrix_print(Matrix a) {
@@ -68,6 +86,21 @@ void matrix_print(Matrix a) {
 		printf("\n");
 	}
 	printf("]\n");
+}
+
+Vector vector_alloc(int n) {
+	return (Vector) {
+		.n = n,
+		.elements = malloc(n*sizeof(Neural_Real))
+	};	
+}
+
+void vector_print(Vector v) {
+	printf("[\n");
+	for(int i = 0; i < v.n; ++i) {
+		printf("\t"NEURAL_REAL_PRINT_TYPE", ", v.elements[i]);
+	}
+	printf("]\n");	
 }
 
 #endif // NEURAL_IMPLEMENTATION
