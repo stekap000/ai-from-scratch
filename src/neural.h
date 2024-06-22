@@ -82,7 +82,7 @@ Vector network_forward(Network n, Vector v);
 Vector vector_alloc(int n) {
 	return (Vector) {
 		.n = n,
-		.elements = malloc(n*sizeof(Neural_Real))
+		.elements = calloc(n, sizeof(Neural_Real))
 	};	
 }
 
@@ -98,7 +98,7 @@ Matrix matrix_alloc(int rows, int cols) {
 	return (Matrix) {
 		.rows = rows,
 		.cols = cols,
-		.elements = malloc(rows*cols*sizeof(Neural_Real))
+		.elements = calloc(rows*cols, sizeof(Neural_Real))
 	};
 }
 
@@ -137,8 +137,18 @@ void matrix_vector_mul(Matrix a, Vector v, Vector *result) {
 	}
 }
 
+//typedef struct {
+//	int layers_num;
+//	// Has (layers_num + 1) elements (for layers and input).
+//	int* layers_sizes;
+//	// Has (layers_num) elements.
+//	Matrix* weight_matrices;
+//	// Has (layers_num) elements.
+//	Vector* bias_vectors;
+//} Network;
 Network network_alloc(int layers_num, int* layers_sizes) {
 	NEURAL_NOT_IMPLEMENTED("");
+	
 }
 
 Vector network_forward(Network n, Vector v) {
