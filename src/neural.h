@@ -40,16 +40,6 @@ typedef struct {
 	Neural_Real* elements;
 } Matrix;
 
-Vector vector_alloc(int n);
-void vector_print(Vector v);
-
-Matrix matrix_alloc(int rows, int cols);
-void matrix_add(Matrix a, Matrix b, Matrix *result);
-void matrix_mul(Matrix a, Matrix b, Matrix *result);
-void matrix_print(Matrix a);
-
-void matrix_vector_mul(Matrix a, Vector v, Vector *result);
-
 /*
 Layer model:
 [previous_layer_output_vector] *
@@ -63,6 +53,27 @@ Short description:
 current_layer_output_vector = activation(input_later_output_vector*weights + biases)
 activation(W*A + B)
 */
+typedef struct {
+	int layers_num;
+	// Has (layers_num + 1) elements (for layers and input).
+	int* layers_sizes;
+	// Has (layers_num) elements.
+	Matrix* weight_matrices;
+	// Has (layers_num) elements.
+	Vector* bias_vectors;
+} Network;
+
+Vector vector_alloc(int n);
+void vector_print(Vector v);
+
+Matrix matrix_alloc(int rows, int cols);
+void matrix_add(Matrix a, Matrix b, Matrix *result);
+void matrix_mul(Matrix a, Matrix b, Matrix *result);
+void matrix_print(Matrix a);
+void matrix_vector_mul(Matrix a, Vector v, Vector *result);
+
+Network network_alloc(int layers_num, int* layers_sizes);
+Vector network_forward(Network n, Vector v);
 
 #endif // NEURAL_H
 
@@ -124,6 +135,14 @@ void matrix_vector_mul(Matrix a, Vector v, Vector *result) {
 		}
 		result->elements[i] = temp;
 	}
+}
+
+Network network_alloc(int layers_num, int* layers_sizes) {
+	NEURAL_NOT_IMPLEMENTED("");
+}
+
+Vector network_forward(Network n, Vector v) {
+	NEURAL_NOT_IMPLEMENTED("");
 }
 
 #endif // NEURAL_IMPLEMENTATION
