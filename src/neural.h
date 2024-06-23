@@ -30,6 +30,9 @@
 #define neural_exp(x) expf(x)
 #endif
 
+#define NEURAL_DEFAULT_LEARNING_RATE 1e-2
+#define NEURAL_DEFAULT_EPS 1e-2
+
 typedef Neural_Real (*Activation_Function) (Neural_Real);
 
 Neural_Real activation_function_sigmoid(Neural_Real x);
@@ -52,6 +55,8 @@ typedef struct {
 	Vector output;
 } Training_Sample;
 
+// TODO: When vectors are stored as training data, there is no need to have sizes for every
+// single vector since they are all of the same size.
 typedef struct {
 	Training_Sample* samples;
 	int n;
@@ -81,6 +86,9 @@ typedef struct {
 	// Has (layers_num) elements.
 	Vector* bias_vectors;
 	Activation_Function activation_function;
+	Neural_Real learning_rate;
+	Neural_Real eps;
+	int number_of_parameters;
 } Network;
 
 Vector vector_alloc(int n);
@@ -104,10 +112,58 @@ Vector network_forward(Network n, Vector v);
 Neural_Real network_cost(Network n, Training_Data d);
 void network_print(Network n);
 
+
 float random_neural_real();
 Vector random_vector(int n);
 Matrix random_matrix(int rows, int cols);
 Network random_network(int layers_num, int layers_sizes[]);
+
+// TODO: This should be done with backpropagation, but for testing purposes of other code,
+// it is currently implemented in this slow way.
+#ifdef NEURAL_DEBUG
+Vector network_cost_gradient(Network n, Training_Data d) {
+	Neural_Real temp = 0;
+	Neural_Real first = 0;
+	Neural_Real second = 0;
+	Vector gradient = vector_alloc(n.number_of_parameters);
+	int gradient_index = 0;
+	for(int i = 0; i < n.layers_num; ++i) {
+		Matrix m = n.weight_matrices[i];
+		for(int j = 0; j < m.rows*m.cols; ++j) {
+			temp = m.elements[j];
+			m.elements[j] += n.eps;
+			first = network_cost(n, d);
+			m.elements[j] = temp;
+			second = network_cost(n, d);
+			gradient.elements[gradient_index++] = (first - second) / NEURAL_DEFAULT_EPS;
+		}
+
+		Vector v = n.bias_vectors[i];
+		for(int j = 0; j < v.n; ++j) {
+			temp = v.elements[j];
+			v.elements[j] += n.eps;
+			first = network_cost(n, d);
+			v.elements[j] = temp;
+			second = network_cost(n, d);
+			gradient.elements[gradient_index++] = (first - second) / NEURAL_DEFAULT_EPS;
+		}
+	}
+	return gradient;
+}
+
+void apply_gradient(Network* n, Vector gradient) {
+	int gradient_index = 0;
+	for(int i = 0; i < n->layers_num; ++i) {
+		Matrix* m = &n->weight_matrices[i];
+		for(int j = 0; j < m->rows*m->cols; ++j)
+			m->elements[j] -= gradient.elements[gradient_index++] * NEURAL_DEFAULT_LEARNING_RATE;
+
+		Vector* v = &n->bias_vectors[i];
+		for(int j = 0; j < v->n; ++j)
+			v->elements[j] -= gradient.elements[gradient_index++] * NEURAL_DEFAULT_LEARNING_RATE;
+	}
+}
+#endif
 
 #endif // NEURAL_H
 
@@ -218,6 +274,12 @@ Network network_alloc(int layers_num, int layers_sizes[]) {
 	n.weight_matrices = NEURAL_CALLOC(layers_num, sizeof(Matrix));
 	n.bias_vectors = NEURAL_CALLOC(layers_num, sizeof(Vector));
 	n.activation_function = activation_function_sigmoid;
+	n.learning_rate = NEURAL_DEFAULT_LEARNING_RATE;
+	n.eps = NEURAL_DEFAULT_EPS;
+	n.number_of_parameters = 0;
+	for(int i = 0; i < layers_num; ++i) {
+		n.number_of_parameters += layers_sizes[i]*layers_sizes[i+1] + layers_sizes[i+1]; 
+	}
 	
 	for(int i = 0; i < layers_num; ++i) {
 		n.layers_sizes[i] = layers_sizes[i];
