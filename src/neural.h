@@ -2,6 +2,7 @@
 #define NEURAL_H
 
 #include <stdio.h> // For printing.
+#include <math.h>
 
 #ifndef NEURAL_ASSERT
 #include <assert.h>
@@ -23,10 +24,17 @@
 #ifdef NEURAL_USE_DOUBLE
 #define Neural_Real double
 #define NEURAL_REAL_PRINT_TYPE "%.4lf"
+#define neural_exp(x) exp(x)
 #else
 #define Neural_Real float
 #define NEURAL_REAL_PRINT_TYPE "%.4f"
+#define neural_exp(x) expf(x)
 #endif
+
+typedef Neural_Real (*Activation_Function) (Neural_Real);
+
+Neural_Real activation_function_sigmoid(Neural_Real x);
+Neural_Real activation_function_identity(Neural_Real x);
 
 typedef struct {
 	int n;
@@ -55,6 +63,7 @@ activation(W*A + B)
 */
 typedef struct {
 	int layers_num;
+	int max_layer_size;
 	// Has (layers_num + 1) elements (for input and layers).
 	// First element is the size of input.
 	int* layers_sizes;
@@ -62,13 +71,14 @@ typedef struct {
 	Matrix* weight_matrices;
 	// Has (layers_num) elements.
 	Vector* bias_vectors;
-	int max_layer_size;
+	Activation_Function activation_function;
 } Network;
 
 Vector vector_alloc(int n);
 void vector_free(Vector* v);
 void vector_add(Vector u, Vector v, Vector* result);
 void vector_elements(Vector* v, Neural_Real elements[]);
+void vector_apply_activation_function(Vector* v, Activation_Function activation_function);
 void vector_print(Vector v);
 
 Matrix matrix_alloc(int rows, int cols);
@@ -87,6 +97,14 @@ void network_print(Network n);
 #endif // NEURAL_H
 
 #ifdef NEURAL_IMPLEMENTATION
+
+Neural_Real activation_function_sigmoid(Neural_Real x) {
+	return 1.f / (1.f + neural_exp(-x));
+}
+
+Neural_Real activation_function_identity(Neural_Real x) {
+	return x;
+}
 
 Vector vector_alloc(int n) {
 	return (Vector) {
@@ -109,6 +127,12 @@ void vector_add(Vector u, Vector v, Vector* result) {
 void vector_elements(Vector* v, Neural_Real elements[]) {
 	for(int i = 0; i < v->n; ++i)
 		v->elements[i] = elements[i];
+}
+
+void vector_apply_activation_function(Vector* v, Activation_Function activation_function) {
+	for(int i = 0; i < v->n; ++i) {
+		v->elements[i] = activation_function(v->elements[i]);
+	}
 }
 
 void vector_print(Vector v) {
@@ -174,11 +198,12 @@ void matrix_print(Matrix a) {
 Network network_alloc(int layers_num, int layers_sizes[]) {
 	Network n;
 	n.layers_num = layers_num;
+	n.max_layer_size = 0;
 	n.layers_sizes = NEURAL_CALLOC(layers_num + 1, sizeof(n.layers_sizes[0]));
 	n.weight_matrices = NEURAL_CALLOC(layers_num, sizeof(Matrix));
 	n.bias_vectors = NEURAL_CALLOC(layers_num, sizeof(Vector));
-	n.max_layer_size = 0;
-
+	n.activation_function = activation_function_sigmoid;
+	
 	for(int i = 0; i < layers_num; ++i) {
 		n.layers_sizes[i] = layers_sizes[i];
 		n.weight_matrices[i] = matrix_alloc(layers_sizes[i+1], layers_sizes[i]);
@@ -220,6 +245,7 @@ Vector network_forward(Network n, Vector v) {
 		vector_elements(&v, temp.elements);
 		v.n = n.weight_matrices[i].rows;
 		vector_add(v, n.bias_vectors[i], &v);
+		vector_apply_activation_function(&v, n.activation_function);
 	}
 	vector_free(&temp);
 	return v;
