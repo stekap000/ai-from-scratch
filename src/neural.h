@@ -108,8 +108,8 @@ void matrix_print(Matrix a);
 Network network_alloc(int layers_num, int layers_sizes[]);
 void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]);
 Vector network_create_input_vector(Network n, Neural_Real elements[]);
-Vector network_forward(Network n, Vector v);
-Neural_Real network_cost(Network n, Training_Data d);
+Vector network_forward(Network* n, Vector v);
+Neural_Real network_cost(Network* n, Training_Data d);
 void network_print(Network n);
 
 
@@ -121,31 +121,29 @@ Network random_network(int layers_num, int layers_sizes[]);
 // TODO: This should be done with backpropagation, but for testing purposes of other code,
 // it is currently implemented in this slow way.
 #ifdef NEURAL_DEBUG
-Vector network_cost_gradient(Network n, Training_Data d) {
+Vector network_cost_gradient(Network* n, Training_Data d) {
 	Neural_Real temp = 0;
 	Neural_Real first = 0;
-	Neural_Real second = 0;
-	Vector gradient = vector_alloc(n.number_of_parameters);
+	Neural_Real second = network_cost(n, d);
+	Vector gradient = vector_alloc(n->number_of_parameters);
 	int gradient_index = 0;
-	for(int i = 0; i < n.layers_num; ++i) {
-		Matrix m = n.weight_matrices[i];
+	for(int i = 0; i < n->layers_num; ++i) {
+		Matrix m = n->weight_matrices[i];
 		for(int j = 0; j < m.rows*m.cols; ++j) {
 			temp = m.elements[j];
-			m.elements[j] += n.eps;
+			m.elements[j] += n->eps;
 			first = network_cost(n, d);
 			m.elements[j] = temp;
-			second = network_cost(n, d);
-			gradient.elements[gradient_index++] = (first - second) / NEURAL_DEFAULT_EPS;
+			gradient.elements[gradient_index++] = (first - second) / n->eps;
 		}
 
-		Vector v = n.bias_vectors[i];
+		Vector v = n->bias_vectors[i];
 		for(int j = 0; j < v.n; ++j) {
 			temp = v.elements[j];
-			v.elements[j] += n.eps;
+			v.elements[j] += n->eps;
 			first = network_cost(n, d);
 			v.elements[j] = temp;
-			second = network_cost(n, d);
-			gradient.elements[gradient_index++] = (first - second) / NEURAL_DEFAULT_EPS;
+			gradient.elements[gradient_index++] = (first - second) / n->eps;
 		}
 	}
 	return gradient;
@@ -154,13 +152,13 @@ Vector network_cost_gradient(Network n, Training_Data d) {
 void apply_gradient(Network* n, Vector gradient) {
 	int gradient_index = 0;
 	for(int i = 0; i < n->layers_num; ++i) {
-		Matrix* m = &n->weight_matrices[i];
-		for(int j = 0; j < m->rows*m->cols; ++j)
-			m->elements[j] -= gradient.elements[gradient_index++] * NEURAL_DEFAULT_LEARNING_RATE;
+		Matrix m = n->weight_matrices[i];
+		for(int j = 0; j < m.rows*m.cols; ++j)
+			m.elements[j] -= gradient.elements[gradient_index++] * n->learning_rate;
 
-		Vector* v = &n->bias_vectors[i];
-		for(int j = 0; j < v->n; ++j)
-			v->elements[j] -= gradient.elements[gradient_index++] * NEURAL_DEFAULT_LEARNING_RATE;
+		Vector v = n->bias_vectors[i];
+		for(int j = 0; j < v.n; ++j)
+			v.elements[j] -= gradient.elements[gradient_index++] * n->learning_rate;
 	}
 }
 #endif
@@ -315,21 +313,21 @@ Vector network_create_input_vector(Network n, Neural_Real elements[]) {
 	return v;
 }
 
-Vector network_forward(Network n, Vector v) {
+Vector network_forward(Network* n, Vector v) {
 	// TODO: Remove constant new allocation.
 	Vector temp = vector_alloc(v.n);
-	for(int i = 0; i < n.layers_num; ++i) {
-		matrix_vector_mul(n.weight_matrices[i], v, &temp);
+	for(int i = 0; i < n->layers_num; ++i) {
+		matrix_vector_mul(n->weight_matrices[i], v, &temp);
 		vector_elements(&v, temp.elements);
-		v.n = n.weight_matrices[i].rows;
-		vector_add(v, n.bias_vectors[i], &v);
-		vector_apply_activation_function(&v, n.activation_function);
+		v.n = n->weight_matrices[i].rows;
+		vector_add(v, n->bias_vectors[i], &v);
+		vector_apply_activation_function(&v, n->activation_function);
 	}
 	vector_free(&temp);
 	return v;
 }
 
-Neural_Real network_cost(Network n, Training_Data d) {
+Neural_Real network_cost(Network* n, Training_Data d) {
 	Neural_Real sum = 0;
 	for(int i = 0; i < d.n; ++i) {
 		Vector actual_output = network_forward(n, d.samples[i].input);
