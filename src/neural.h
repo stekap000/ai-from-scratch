@@ -3,6 +3,7 @@
 
 #include <stdio.h> // For printing.
 #include <math.h>
+#include <stdlib.h>
 
 #ifndef NEURAL_ASSERT
 #include <assert.h>
@@ -10,12 +11,10 @@
 #endif
 
 #ifndef NEURAL_MALLOC
-#include <stdlib.h>
 #define NEURAL_MALLOC malloc
 #endif
 
 #ifndef NEURAL_CALLOC
-#include <stdlib.h>
 #define NEURAL_CALLOC calloc
 #endif
 
@@ -88,11 +87,16 @@ void matrix_mul(Matrix a, Matrix b, Matrix *result);
 void matrix_vector_mul(Matrix a, Vector v, Vector *result);
 void matrix_print(Matrix a);
 
-Network network_alloc(int layers_num, int* layers_sizes);
+Network network_alloc(int layers_num, int layers_sizes[]);
 void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]);
 Vector network_create_input_vector(Network n, Neural_Real elements[]);
 Vector network_forward(Network n, Vector v);
 void network_print(Network n);
+
+float random_neural_real();
+Vector random_vector(int n);
+Matrix random_matrix(int rows, int cols);
+Network random_network(int layers_num, int layers_sizes[]);
 
 #endif // NEURAL_H
 
@@ -260,6 +264,36 @@ void network_print(Network n) {
 		printf("Biases:\n");
 		vector_print(n.bias_vectors[i]);
 	}
+}
+
+float random_neural_real() {
+	return (Neural_Real)rand()/(Neural_Real)RAND_MAX;
+}
+
+Vector random_vector(int n) {
+	Vector v = vector_alloc(n);
+	for(int i = 0; i < n; ++i)
+		v.elements[i] = random_neural_real();
+	return v;
+}
+
+Matrix random_matrix(int rows, int cols) {
+	Matrix m = matrix_alloc(rows, cols);
+	for(int i = 0; i < m.rows*m.cols; ++i)
+		m.elements[i] = random_neural_real();
+	return m;
+}
+
+Network random_network(int layers_num, int layers_sizes[]) {
+	Network n = network_alloc(layers_num, layers_sizes);
+	for(int i = 0; i < layers_num; ++i) {
+		for(int j = 0; j < n.weight_matrices[i].rows*n.weight_matrices[i].cols; ++j)
+			n.weight_matrices[i].elements[j] = random_neural_real();
+
+		for(int j = 0; j < n.bias_vectors[i].n; ++j)
+			n.bias_vectors[i].elements[j] = random_neural_real();
+	}
+	return n;
 }
 
 #endif // NEURAL_IMPLEMENTATION
