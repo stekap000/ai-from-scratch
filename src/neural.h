@@ -47,6 +47,16 @@ typedef struct {
 	Neural_Real* elements;
 } Matrix;
 
+typedef struct {
+	Vector input;
+	Vector output;
+} Training_Sample;
+
+typedef struct {
+	Training_Sample* samples;
+	int n;
+} Training_Data;
+
 /*
 Layer model:
 [previous_layer_output_vector] *
@@ -91,6 +101,7 @@ Network network_alloc(int layers_num, int layers_sizes[]);
 void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]);
 Vector network_create_input_vector(Network n, Neural_Real elements[]);
 Vector network_forward(Network n, Vector v);
+Neural_Real network_cost(Network n, Training_Data d);
 void network_print(Network n);
 
 float random_neural_real();
@@ -243,6 +254,7 @@ Vector network_create_input_vector(Network n, Neural_Real elements[]) {
 }
 
 Vector network_forward(Network n, Vector v) {
+	// TODO: Remove constant new allocation.
 	Vector temp = vector_alloc(v.n);
 	for(int i = 0; i < n.layers_num; ++i) {
 		matrix_vector_mul(n.weight_matrices[i], v, &temp);
@@ -253,6 +265,18 @@ Vector network_forward(Network n, Vector v) {
 	}
 	vector_free(&temp);
 	return v;
+}
+
+Neural_Real network_cost(Network n, Training_Data d) {
+	Neural_Real sum = 0;
+	for(int i = 0; i < d.n; ++i) {
+		Vector actual_output = network_forward(n, d.samples[i].input);
+		for(int j = 0; j < actual_output.n; ++j) {
+			Neural_Real dist = (actual_output.elements[j] - d.samples[i].output.elements[j]);
+			sum += dist*dist;
+		}
+	}
+	return sum / d.n;
 }
 
 void network_print(Network n) {
