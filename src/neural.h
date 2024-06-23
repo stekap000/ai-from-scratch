@@ -62,6 +62,7 @@ typedef struct {
 	Matrix* weight_matrices;
 	// Has (layers_num) elements.
 	Vector* bias_vectors;
+	int max_layer_size;
 } Network;
 
 Vector vector_alloc(int n);
@@ -79,6 +80,7 @@ void matrix_print(Matrix a);
 
 Network network_alloc(int layers_num, int* layers_sizes);
 void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]);
+Vector network_create_input_vector(Network n, Neural_Real elements[]);
 Vector network_forward(Network n, Vector v);
 void network_print(Network n);
 
@@ -175,12 +177,19 @@ Network network_alloc(int layers_num, int layers_sizes[]) {
 	n.layers_sizes = NEURAL_CALLOC(layers_num + 1, sizeof(n.layers_sizes[0]));
 	n.weight_matrices = NEURAL_CALLOC(layers_num, sizeof(Matrix));
 	n.bias_vectors = NEURAL_CALLOC(layers_num, sizeof(Vector));
-	
+	n.max_layer_size = 0;
+
 	for(int i = 0; i < layers_num; ++i) {
 		n.layers_sizes[i] = layers_sizes[i];
 		n.weight_matrices[i] = matrix_alloc(layers_sizes[i+1], layers_sizes[i]);
 		n.bias_vectors[i] = vector_alloc(layers_sizes[i+1]);
+
+		if(layers_sizes[i] > n.max_layer_size)
+			n.max_layer_size = layers_sizes[i];
 	}
+		
+	if(layers_sizes[layers_num] > n.max_layer_size)
+		n.max_layer_size = layers_sizes[layers_num + 1];
 
 	return n;
 }
@@ -196,6 +205,12 @@ void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], 
 		B.elements[i] = biases_elements[i];
 	}
 #undef B
+}
+
+Vector network_create_input_vector(Network n, Neural_Real elements[]) {
+	Vector v = vector_alloc(n.max_layer_size);
+	vector_elements(&v, elements);
+	return v;
 }
 
 Vector network_forward(Network n, Vector v) {
