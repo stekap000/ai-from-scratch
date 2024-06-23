@@ -65,9 +65,13 @@ typedef struct {
 } Network;
 
 Vector vector_alloc(int n);
+void vector_free(Vector* v);
+void vector_add(Vector u, Vector v, Vector* result);
+void vector_elements(Vector* v, Neural_Real elements[]);
 void vector_print(Vector v);
 
 Matrix matrix_alloc(int rows, int cols);
+void matrix_free(Matrix* m);
 void matrix_add(Matrix a, Matrix b, Matrix *result);
 void matrix_mul(Matrix a, Matrix b, Matrix *result);
 void matrix_vector_mul(Matrix a, Vector v, Vector *result);
@@ -89,6 +93,22 @@ Vector vector_alloc(int n) {
 	};	
 }
 
+void vector_free(Vector* v) {
+	free(v->elements);
+	v->elements = 0;
+	v->n = 0;
+}
+
+void vector_add(Vector u, Vector v, Vector* result) {
+	for(int i = 0; i < u.n; ++i)
+		result->elements[i] = u.elements[i] + v.elements[i];
+}
+
+void vector_elements(Vector* v, Neural_Real elements[]) {
+	for(int i = 0; i < v->n; ++i)
+		v->elements[i] = elements[i];
+}
+
 void vector_print(Vector v) {
 	printf("[");
 	for(int i = 0; i < v.n; ++i) {
@@ -105,6 +125,13 @@ Matrix matrix_alloc(int rows, int cols) {
 	};
 }
 
+void matrix_free(Matrix* m) {
+	free(m->elements);
+	m->elements = 0;
+	m->rows = 0;
+	m->cols = 0;
+}
+
 void matrix_add(Matrix a, Matrix b, Matrix *result) {
 	// Current assumption is that dimensions match for addition.
    	for(int i = 0; i < result->rows * result->cols; ++i) {
@@ -114,10 +141,12 @@ void matrix_add(Matrix a, Matrix b, Matrix *result) {
 
 void matrix_mul(Matrix a, Matrix b, Matrix *result) {
 	NEURAL_NOT_IMPLEMENTED("");
+	(void)a;
+	(void)b;
+	(void)result;
 }
 
 void matrix_vector_mul(Matrix a, Vector v, Vector *result) {
-	NEURAL_NOT_IMPLEMENTED("");
 	// Current assumption is that dimensions match for matrix vector multiplication.
 	float temp = 0;
 	for(int i = 0; i < a.rows; ++i) {
@@ -170,7 +199,15 @@ void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], 
 }
 
 Vector network_forward(Network n, Vector v) {
-	NEURAL_NOT_IMPLEMENTED("");
+	Vector temp = vector_alloc(v.n);
+	for(int i = 0; i < n.layers_num; ++i) {
+		matrix_vector_mul(n.weight_matrices[i], v, &temp);
+		vector_elements(&v, temp.elements);
+		v.n = n.weight_matrices[i].rows;
+		vector_add(v, n.bias_vectors[i], &v);
+	}
+	vector_free(&temp);
+	return v;
 }
 
 void network_print(Network n) {
