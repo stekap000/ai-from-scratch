@@ -55,7 +55,8 @@ activation(W*A + B)
 */
 typedef struct {
 	int layers_num;
-	// Has (layers_num + 1) elements (for layers and input).
+	// Has (layers_num + 1) elements (for input and layers).
+	// First element is the size of input.
 	int* layers_sizes;
 	// Has (layers_num) elements.
 	Matrix* weight_matrices;
@@ -69,11 +70,13 @@ void vector_print(Vector v);
 Matrix matrix_alloc(int rows, int cols);
 void matrix_add(Matrix a, Matrix b, Matrix *result);
 void matrix_mul(Matrix a, Matrix b, Matrix *result);
-void matrix_print(Matrix a);
 void matrix_vector_mul(Matrix a, Vector v, Vector *result);
+void matrix_print(Matrix a);
 
 Network network_alloc(int layers_num, int* layers_sizes);
+void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]);
 Vector network_forward(Network n, Vector v);
+void network_print(Network n);
 
 #endif // NEURAL_H
 
@@ -82,12 +85,12 @@ Vector network_forward(Network n, Vector v);
 Vector vector_alloc(int n) {
 	return (Vector) {
 		.n = n,
-		.elements = calloc(n, sizeof(Neural_Real))
+		.elements = NEURAL_CALLOC(n, sizeof(Neural_Real))
 	};	
 }
 
 void vector_print(Vector v) {
-	printf("[\n");
+	printf("[");
 	for(int i = 0; i < v.n; ++i) {
 		printf("\t"NEURAL_REAL_PRINT_TYPE", ", v.elements[i]);
 	}
@@ -98,7 +101,7 @@ Matrix matrix_alloc(int rows, int cols) {
 	return (Matrix) {
 		.rows = rows,
 		.cols = cols,
-		.elements = calloc(rows*cols, sizeof(Neural_Real))
+		.elements = NEURAL_CALLOC(rows*cols, sizeof(Neural_Real))
 	};
 }
 
@@ -111,17 +114,6 @@ void matrix_add(Matrix a, Matrix b, Matrix *result) {
 
 void matrix_mul(Matrix a, Matrix b, Matrix *result) {
 	NEURAL_NOT_IMPLEMENTED("");
-}
-
-void matrix_print(Matrix a) {
-	printf("[\n");
-	for(int i = 0; i < a.rows; ++i) {
-		for(int j = 0; j < a.cols; ++j) {
-			printf("\t"NEURAL_REAL_PRINT_TYPE", ", a.elements[i*a.cols + j]);
-		}
-		printf("\n");
-	}
-	printf("]\n");
 }
 
 void matrix_vector_mul(Matrix a, Vector v, Vector *result) {
@@ -137,22 +129,59 @@ void matrix_vector_mul(Matrix a, Vector v, Vector *result) {
 	}
 }
 
-//typedef struct {
-//	int layers_num;
-//	// Has (layers_num + 1) elements (for layers and input).
-//	int* layers_sizes;
-//	// Has (layers_num) elements.
-//	Matrix* weight_matrices;
-//	// Has (layers_num) elements.
-//	Vector* bias_vectors;
-//} Network;
-Network network_alloc(int layers_num, int* layers_sizes) {
-	NEURAL_NOT_IMPLEMENTED("");
+void matrix_print(Matrix a) {
+	printf("[\n");
+	for(int i = 0; i < a.rows; ++i) {
+		for(int j = 0; j < a.cols; ++j) {
+			printf("\t"NEURAL_REAL_PRINT_TYPE", ", a.elements[i*a.cols + j]);
+		}
+		printf("\n");
+	}
+	printf("]\n");
+}
+
+Network network_alloc(int layers_num, int layers_sizes[]) {
+	Network n;
+	n.layers_num = layers_num;
+	n.layers_sizes = NEURAL_CALLOC(layers_num + 1, sizeof(n.layers_sizes[0]));
+	n.weight_matrices = NEURAL_CALLOC(layers_num, sizeof(Matrix));
+	n.bias_vectors = NEURAL_CALLOC(layers_num, sizeof(Vector));
 	
+	for(int i = 0; i < layers_num; ++i) {
+		n.layers_sizes[i] = layers_sizes[i];
+		n.weight_matrices[i] = matrix_alloc(layers_sizes[i+1], layers_sizes[i]);
+		n.bias_vectors[i] = vector_alloc(layers_sizes[i+1]);
+	}
+
+	return n;
+}
+
+void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]) {
+#define M n->weight_matrices[layer_index]
+	for(int i = 0; i < M.rows * M.cols; ++i) {
+		M.elements[i] = weights_elements[i];
+	}
+#undef M
+#define B n->bias_vectors[layer_index]
+	for(int i = 0; i < B.n; ++i) {
+		B.elements[i] = biases_elements[i];
+	}
+#undef B
 }
 
 Vector network_forward(Network n, Vector v) {
 	NEURAL_NOT_IMPLEMENTED("");
+}
+
+void network_print(Network n) {
+	printf("Network:\n");
+	for(int i = 0; i < n.layers_num; ++i) {
+		printf("Layer %d: ==============================\n", i);
+		printf("Weights:\n");
+		matrix_print(n.weight_matrices[i]);
+		printf("Biases:\n");
+		vector_print(n.bias_vectors[i]);
+	}
 }
 
 #endif // NEURAL_IMPLEMENTATION
