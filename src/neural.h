@@ -123,8 +123,7 @@ Network random_network(int layers_num, int layers_sizes[]);
 #ifdef NEURAL_DEBUG
 Vector network_cost_gradient(Network* n, Training_Data d) {
 	Neural_Real temp = 0;
-	Neural_Real first = 0;
-	Neural_Real second = network_cost(n, d);
+	Neural_Real base_cost = network_cost(n, d);
 	Vector gradient = vector_alloc(n->number_of_parameters);
 	int gradient_index = 0;
 	for(int i = 0; i < n->layers_num; ++i) {
@@ -132,18 +131,16 @@ Vector network_cost_gradient(Network* n, Training_Data d) {
 		for(int j = 0; j < m.rows*m.cols; ++j) {
 			temp = m.elements[j];
 			m.elements[j] += n->eps;
-			first = network_cost(n, d);
+			gradient.elements[gradient_index++] = (network_cost(n, d) - base_cost) / n->eps;
 			m.elements[j] = temp;
-			gradient.elements[gradient_index++] = (first - second) / n->eps;
 		}
 
 		Vector v = n->bias_vectors[i];
 		for(int j = 0; j < v.n; ++j) {
 			temp = v.elements[j];
 			v.elements[j] += n->eps;
-			first = network_cost(n, d);
+			gradient.elements[gradient_index++] = (network_cost(n, d) - base_cost) / n->eps;
 			v.elements[j] = temp;
-			gradient.elements[gradient_index++] = (first - second) / n->eps;
 		}
 	}
 	return gradient;
