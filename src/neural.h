@@ -112,11 +112,12 @@ Vector network_forward(Network* n, Vector v);
 Neural_Real network_cost(Network* n, Training_Data d);
 void network_print(Network n);
 
-
 float random_neural_real();
 Vector random_vector(int n);
 Matrix random_matrix(int rows, int cols);
 Network random_network(int layers_num, int layers_sizes[]);
+
+void training_data_print(Training_Data d);
 
 // TODO: This should be done with backpropagation, but for testing purposes of other code,
 // it is currently implemented in this slow way.
@@ -310,7 +311,9 @@ Vector network_create_input_vector(Network n, Neural_Real elements[]) {
 	return v;
 }
 
-Vector network_forward(Network* n, Vector v) {
+Vector network_forward(Network* n, Vector v_orig) {
+	Vector v = vector_alloc(v_orig.n);
+	vector_elements(&v, v_orig.elements);
 	// TODO: Remove constant new allocation.
 	Vector temp = vector_alloc(v.n);
 	for(int i = 0; i < n->layers_num; ++i) {
@@ -375,6 +378,13 @@ Network random_network(int layers_num, int layers_sizes[]) {
 			n.bias_vectors[i].elements[j] = random_neural_real();
 	}
 	return n;
+}
+
+void training_data_print(Training_Data d) {
+	for(int i = 0; i < d.n; ++i) {
+		vector_print(d.samples[i].input);
+		vector_print(d.samples[i].output);
+	}
 }
 
 #endif // NEURAL_IMPLEMENTATION
