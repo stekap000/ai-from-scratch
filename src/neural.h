@@ -5,6 +5,12 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include <stdint.h>
+#define u8 uint8_t
+#define u16 uint16_t
+#define u32 uint32_t
+#define u64 uint64_t
+
 #ifndef NEURAL_ASSERT
 #include <assert.h>
 #define NEURAL_ASSERT(cond) assert(cond)
@@ -23,10 +29,16 @@
 #ifdef NEURAL_USE_DOUBLE
 #define Neural_Real double
 #define NEURAL_REAL_PRINT_TYPE "%.4lf"
+#define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffffffffffff
+#define NEURAL_REAL_UINT_EQUIV u64
+
 #define neural_exp(x) exp(x)
 #else
 #define Neural_Real float
 #define NEURAL_REAL_PRINT_TYPE "%.4f"
+#define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffff
+#define NEURAL_REAL_UINT_EQUIV u32
+
 #define neural_exp(x) expf(x)
 #endif
 
@@ -37,6 +49,7 @@ typedef Neural_Real (*Activation_Function) (Neural_Real);
 
 Neural_Real activation_function_sigmoid(Neural_Real x);
 Neural_Real activation_function_identity(Neural_Real x);
+Neural_Real activation_function_relu(Neural_Real x);
 
 typedef struct {
 	int n;
@@ -119,6 +132,8 @@ Network random_network(int layers_num, int layers_sizes[]);
 
 void training_data_print(Training_Data d);
 
+Neural_Real neural_abs(Neural_Real x);
+
 // TODO: This should be done with backpropagation, but for testing purposes of other code,
 // it is currently implemented in this slow way.
 #ifdef NEURAL_DEBUG
@@ -171,6 +186,10 @@ Neural_Real activation_function_sigmoid(Neural_Real x) {
 
 Neural_Real activation_function_identity(Neural_Real x) {
 	return x;
+}
+
+Neural_Real activation_function_relu(Neural_Real x) {
+	return (x + neural_abs(x)) * 0.5;
 }
 
 Vector vector_alloc(int n) {
@@ -385,6 +404,12 @@ void training_data_print(Training_Data d) {
 		vector_print(d.samples[i].input);
 		vector_print(d.samples[i].output);
 	}
+}
+
+Neural_Real neural_abs(Neural_Real x) {
+	union { Neural_Real f; NEURAL_REAL_UINT_EQUIV u; } fbits = {x};
+	fbits.u &= NEURAL_REAL_SIGN_BIT_MASK;
+	return fbits.f;
 }
 
 #endif // NEURAL_IMPLEMENTATION
