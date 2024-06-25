@@ -30,14 +30,14 @@
 #define Neural_Real double
 #define NEURAL_REAL_PRINT_TYPE "%.4lf"
 #define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffffffffffff
-#define NEURAL_REAL_UINT_EQUIV u64
+#define NEURAL_REAL_BITS_TYPE u64
 
 #define neural_exp(x) exp(x)
 #else
 #define Neural_Real float
 #define NEURAL_REAL_PRINT_TYPE "%.4f"
 #define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffff
-#define NEURAL_REAL_UINT_EQUIV u32
+#define NEURAL_REAL_BITS_TYPE u32
 
 #define neural_exp(x) expf(x)
 #endif
@@ -407,7 +407,7 @@ void training_data_print(Training_Data d) {
 }
 
 Neural_Real neural_abs(Neural_Real x) {
-	union { Neural_Real f; NEURAL_REAL_UINT_EQUIV u; } fbits = {x};
+	union { Neural_Real f; NEURAL_REAL_BITS_TYPE u; } fbits = {x};
 	fbits.u &= NEURAL_REAL_SIGN_BIT_MASK;
 	return fbits.f;
 }
