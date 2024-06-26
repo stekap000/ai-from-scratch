@@ -31,14 +31,12 @@
 #define NEURAL_REAL_PRINT_TYPE "%.4lf"
 #define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffffffffffff
 #define NEURAL_REAL_BITS_TYPE u64
-
 #define neural_exp(x) exp(x)
 #else
 #define Neural_Real float
 #define NEURAL_REAL_PRINT_TYPE "%.4f"
 #define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffff
 #define NEURAL_REAL_BITS_TYPE u32
-
 #define neural_exp(x) expf(x)
 #endif
 
@@ -119,6 +117,7 @@ void matrix_vector_mul(Matrix a, Vector v, Vector *result);
 void matrix_print(Matrix a);
 
 Network network_alloc(int layers_num, int layers_sizes[]);
+void network_free(Network* n);
 void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]);
 Vector network_create_input_vector(Network n, Neural_Real elements[]);
 Vector network_forward(Network* n, Vector v);
@@ -309,6 +308,39 @@ Network network_alloc(int layers_num, int layers_sizes[]) {
 		n.max_layer_size = layers_sizes[layers_num + 1];
 
 	return n;
+}
+
+	int layers_num;
+	int max_layer_size;
+	// Has (layers_num + 1) elements (for input and layers).
+	// First element is the size of input.
+	int* layers_sizes;
+	// Has (layers_num) elements.
+	Matrix* weight_matrices;
+	// Has (layers_num) elements.
+	Vector* bias_vectors;
+	Activation_Function activation_function;
+	Neural_Real learning_rate;
+	Neural_Real eps;
+	int number_of_parameters;
+
+void network_free(Network* n) {
+	for(int i = 0; i < n->layers_num; ++i) {
+		matrix_free(n->weight_matrices + i);
+		vector_free(n->bias_vectors + i);
+	}
+	free(n->weight_matrices);
+	n->weight_matrices = 0;
+	free(n->bias_vectors);
+	n->bias_vectors = 0;
+	free(n->layers_sizes);
+	n->layers_sizes = 0;
+	n->layers_num = 0;
+	n->max_layer_size = 0;
+	n->activation_function = activation_function_sigmoid;
+	n->learning_rate = NEURAL_DEFAULT_LEARNING_RATE;
+	n->eps = NEURAL_DEFAULT_EPS;
+	n->number_of_parameters = 0;
 }
 
 void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], Neural_Real biases_elements[]) {
