@@ -310,20 +310,6 @@ Network network_alloc(int layers_num, int layers_sizes[]) {
 	return n;
 }
 
-	int layers_num;
-	int max_layer_size;
-	// Has (layers_num + 1) elements (for input and layers).
-	// First element is the size of input.
-	int* layers_sizes;
-	// Has (layers_num) elements.
-	Matrix* weight_matrices;
-	// Has (layers_num) elements.
-	Vector* bias_vectors;
-	Activation_Function activation_function;
-	Neural_Real learning_rate;
-	Neural_Real eps;
-	int number_of_parameters;
-
 void network_free(Network* n) {
 	for(int i = 0; i < n->layers_num; ++i) {
 		matrix_free(n->weight_matrices + i);
