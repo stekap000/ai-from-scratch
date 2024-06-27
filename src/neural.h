@@ -1,6 +1,10 @@
 #ifndef NEURAL_H
 #define NEURAL_H
 
+// TODO: Backpropagation.
+// TODO: Network to file serialization.
+// TODO: Network loading from file.
+
 #include <stdio.h> // For printing.
 #include <math.h>
 #include <stdlib.h>
@@ -376,8 +380,26 @@ Neural_Real network_cost(Network* n, Training_Data d) {
 	return sum / d.n;
 }
 
+	int layers_num;
+	int max_layer_size;
+	// Has (layers_num + 1) elements (for input and layers).
+	// First element is the size of input.
+	int* layers_sizes;
+	// Has (layers_num) elements.
+	Matrix* weight_matrices;
+	// Has (layers_num) elements.
+	Vector* bias_vectors;
+	Activation_Function activation_function;
+	Neural_Real learning_rate;
+	Neural_Real eps;
+	int number_of_parameters;
+
 void network_print(Network n) {
-	printf("Network:\n");
+	printf("NETWORK:\n");
+	printf("Number of parameters: %d\n", n.number_of_parameters);
+	printf("Learning rate: "NEURAL_REAL_PRINT_TYPE"\n", n.learning_rate);
+	printf("Eps: "NEURAL_REAL_PRINT_TYPE"\n", n.eps);
+	//printf("Activation function: "NEURAL_REAL_PRINT_TYPE"\n", n.eps);
 	for(int i = 0; i < n.layers_num; ++i) {
 		printf("Layer %d: ==============================\n", i);
 		printf("Weights:\n");
