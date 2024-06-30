@@ -113,6 +113,8 @@ void network_layer(Network* n, int layer_index, Neural_Real weights_elements[], 
 Vector network_create_input_vector(Network n, Neural_Real elements[]);
 Vector network_forward(Network* n, Vector v);
 Neural_Real network_cost(Network* n, Training_Data d);
+void network_save(Network* n, char* filename);
+Network network_load(char* filename);
 void network_print(Network n);
 
 float random_neural_real();
@@ -367,19 +369,13 @@ Neural_Real network_cost(Network* n, Training_Data d) {
 	return sum / d.n;
 }
 
-	int layers_num;
-	int max_layer_size;
-	// Has (layers_num + 1) elements (for input and layers).
-	// First element is the size of input.
-	int* layers_sizes;
-	// Has (layers_num) elements.
-	Matrix* weight_matrices;
-	// Has (layers_num) elements.
-	Vector* bias_vectors;
-	Activation_Function activation_function;
-	Neural_Real learning_rate;
-	Neural_Real eps;
-	int number_of_parameters;
+void network_save(Network* n, char* filename) {
+	NEURAL_NOT_IMPLEMENTED("");
+}
+
+Network network_load(char* filename) {
+	NEURAL_NOT_IMPLEMENTED("");
+}
 
 void network_print(Network n) {
 	printf("NETWORK:\n");
