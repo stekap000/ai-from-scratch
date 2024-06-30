@@ -77,19 +77,6 @@ typedef struct {
 	int n;
 } Training_Data;
 
-/*
-Layer model:
-[previous_layer_output_vector] *
-|w0 w1 w2 ... size(previous_layer_output_vector)|
-|...                                            |
-|...                                            |
-|size(current_layer_vector)                     | +
-[biases (one for each neuron in current layer)]
-
-Short description:
-current_layer_output_vector = activation(input_later_output_vector*weights + biases)
-activation(W*A + B)
-*/
 typedef struct {
 	int layers_num;
 	int max_layer_size;
