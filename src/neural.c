@@ -30,7 +30,10 @@ void example_xor() {
 	Network xor = random_network(2, (int[]){2, 2, 1});
 	xor.learning_rate = 1e-1;
 	xor.eps = 1e-1;
+	//xor.output
 	network_print(xor);
+
+	printf("\nCOST BEFORE: %f\n", network_cost(&xor, train));
 
 	for(int i = 0; i < 20000; ++i) {
 		Vector g = network_cost_gradient(&xor, train);
@@ -38,7 +41,7 @@ void example_xor() {
 		vector_free(&g);
 	}
 
-	printf("\nCOST AFTER: %f\n\n", network_cost(&xor, train));
+	printf("COST AFTER: %f\n\n", network_cost(&xor, train));
 	network_print(xor);
 	
 	printf("\nValues for training set:\n");
@@ -47,12 +50,7 @@ void example_xor() {
 	}
 }
 
-//typedef struct {
-//	Vector input;
-//	Vector output;
-//} Training_Sample;
-
-int strcmp(char* s1, char* s2) {
+int neural_strcmp(char* s1, char* s2) {
 	while(*s1++ == *s2++);
 	return *s1 - *s2;
 }
@@ -97,17 +95,17 @@ Training_Data parse_iris_data(char* filename) {
 				if(!parsing_string) {
 					buff[buff_index] = 0;
 					
-					if(strcmp(buff, "Setosa")) {
+					if(neural_strcmp(buff, "Setosa")) {
 						data.samples[sample_number].output.elements[0] = 1;
 						data.samples[sample_number].output.elements[1] = 0;
 						data.samples[sample_number].output.elements[2] = 0;
 					}
-					if(strcmp(buff, "Versicolor")) {
+					if(neural_strcmp(buff, "Versicolor")) {
 						data.samples[sample_number].output.elements[0] = 0;
 						data.samples[sample_number].output.elements[1] = 1;
 						data.samples[sample_number].output.elements[2] = 0;
 					}
-					if(strcmp(buff, "Virginica")) {
+					if(neural_strcmp(buff, "Virginica")) {
 						data.samples[sample_number].output.elements[0] = 0;
 						data.samples[sample_number].output.elements[1] = 0;
 						data.samples[sample_number].output.elements[2] = 1;
@@ -130,35 +128,35 @@ void example_iris() {
 	Training_Data data = parse_iris_data("iris.csv");
 	//training_data_print(data);
 
-	Network iris = random_network(2, (int[]){4, 3, 3});
+	Network iris = random_network(3, (int[]){4, 5, 3, 3});
 	iris.learning_rate = 1e-1;
 	iris.eps = 1e-1;
+	iris.output_activation_function_mut = softmax_mut;
 	network_print(iris);
 
-	printf("\nCOST BEFORE: %f\n\n", network_cost(&iris, data));
+	printf("\nCOST BEFORE: %f\n", network_cost(&iris, data));
 
-	// TODO: Add forwarding support for output vector activation function.
+	// TODO: Weird behaviour for larger values (check for memory leak).
+	for(int i = 0; i < 300; ++i) {
+		Vector g = network_cost_gradient(&iris, data);
+		apply_gradient(&iris, g);
+		vector_free(&g);
+	}
 	
-	//for(int i = 0; i < 20000; ++i) {
-	//	Vector g = network_cost_gradient(&iris, data);
-	//	apply_gradient(&iris, g);
-	//	vector_free(&g);
-	//}
-	//
-	//printf("\nCOST AFTER: %f\n\n", network_cost(&iris, data));
-	//network_print(iris);
-	//
-	//printf("\nValues for training set:\n");
-	//for(int i = 0; i < data.n; ++i) {
-	//	vector_print(network_forward(&iris, data.samples[i].input));
-	//}	
+	printf("COST AFTER: %f\n\n", network_cost(&iris, data));
+	network_print(iris);
+
+	printf("\nValues for training set:\n");
+	for(int i = 0; i < data.n; ++i) {
+		vector_print(network_forward(&iris, data.samples[i].input));
+	}	
 }
 
 int main(void) {
 	srand(time(0));
 
-	//example_xor();
-	example_iris();
+	example_xor();
+	//example_iris();
 
 	return 0;
 }
