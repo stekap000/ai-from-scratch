@@ -32,26 +32,24 @@
 
 #ifdef NEURAL_USE_DOUBLE
 #define Neural_Real double
+#define NEURAL_REAL_MAX 1.7976931348623158e+308
 #define NEURAL_REAL_PRINT_TYPE "%.4lf"
 #define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffffffffffff
 #define NEURAL_REAL_BITS_TYPE u64
 #define neural_exp(x) exp(x)
 #else
 #define Neural_Real float
+#define NEURAL_REAL_MAX 3.402823466e+38F
 #define NEURAL_REAL_PRINT_TYPE "%.4f"
 #define NEURAL_REAL_SIGN_BIT_MASK 0x7fffffff
 #define NEURAL_REAL_BITS_TYPE u32
 #define neural_exp(x) expf(x)
 #endif
 
+#define NEURAL_REAL_MIN -NEURAL_REAL_MAX
+
 #define NEURAL_DEFAULT_LEARNING_RATE 1e-2
 #define NEURAL_DEFAULT_EPS 1e-2
-
-typedef Neural_Real (*Activation_Function) (Neural_Real);
-
-Neural_Real activation_function_sigmoid(Neural_Real x);
-Neural_Real activation_function_identity(Neural_Real x);
-Neural_Real activation_function_relu(Neural_Real x);
 
 typedef struct {
 	int n;
@@ -64,6 +62,13 @@ typedef struct {
 	int cols;
 	Neural_Real* elements;
 } Matrix;
+
+typedef Neural_Real (*Activation_Function) (Neural_Real);
+typedef Vector (*Activation_Function_Vector) (Vector);
+
+Neural_Real activation_function_sigmoid(Neural_Real x);
+Neural_Real activation_function_identity(Neural_Real x);
+Neural_Real activation_function_relu(Neural_Real x);
 
 typedef struct {
 	Vector input;
@@ -129,6 +134,27 @@ Neural_Real neural_abs(Neural_Real x);
 // TODO: This should be done with backpropagation, but for testing purposes of other code,
 // it is currently implemented in this slow way.
 #ifdef NEURAL_DEBUG
+Vector softmax(Vector v) {
+	Vector result = vector_alloc(v.n);
+	Neural_Real softmax_sum = 0;
+	for(int i = 0; i < v.n; ++i) {
+		result.elements[i] = neural_exp(v.elements[i]);
+		softmax_sum += result.elements[i];
+	}
+	for(int i = 0; i < v.n; ++i) result.elements[i] /= softmax_sum;
+	return result;
+}
+
+Vector softmax_mut(Vector v) {
+	Neural_Real softmax_sum = 0;
+	for(int i = 0; i < v.n; ++i) {
+		v.elements[i] = neural_exp(v.elements[i]);
+		softmax_sum += v.elements[i];
+	}
+	for(int i = 0; i < v.n; ++i) v.elements[i] /= softmax_sum;
+	return v;
+}
+
 Vector network_cost_gradient(Network* n, Training_Data d) {
 	Neural_Real temp = 0;
 	Neural_Real base_cost = network_cost(n, d);
