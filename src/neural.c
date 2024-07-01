@@ -128,7 +128,30 @@ Training_Data parse_iris_data(char* filename) {
 
 void example_iris() {
 	Training_Data data = parse_iris_data("iris.csv");
-	training_data_print(data);
+	//training_data_print(data);
+
+	Network iris = random_network(2, (int[]){4, 3, 3});
+	iris.learning_rate = 1e-1;
+	iris.eps = 1e-1;
+	network_print(iris);
+
+	printf("\nCOST BEFORE: %f\n\n", network_cost(&iris, data));
+
+	// TODO: Add forwarding support for output vector activation function.
+	
+	//for(int i = 0; i < 20000; ++i) {
+	//	Vector g = network_cost_gradient(&iris, data);
+	//	apply_gradient(&iris, g);
+	//	vector_free(&g);
+	//}
+	//
+	//printf("\nCOST AFTER: %f\n\n", network_cost(&iris, data));
+	//network_print(iris);
+	//
+	//printf("\nValues for training set:\n");
+	//for(int i = 0; i < data.n; ++i) {
+	//	vector_print(network_forward(&iris, data.samples[i].input));
+	//}	
 }
 
 int main(void) {
