@@ -46,6 +46,8 @@
 #define neural_exp(x) expf(x)
 #endif
 
+#define neural_atof(str) (Neural_Real)atof(str)
+
 #define NEURAL_REAL_MIN -NEURAL_REAL_MAX
 
 #define NEURAL_DEFAULT_LEARNING_RATE 1e-2
