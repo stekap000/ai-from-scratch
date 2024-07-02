@@ -68,10 +68,6 @@ typedef struct {
 typedef Neural_Real (*Activation_Function) (Neural_Real);
 typedef void (*Activation_Vector_Function_Mut) (Vector);
 
-Neural_Real activation_function_sigmoid(Neural_Real x);
-Neural_Real activation_function_identity(Neural_Real x);
-Neural_Real activation_function_relu(Neural_Real x);
-
 typedef struct {
 	Vector input;
 	Vector output;
@@ -84,7 +80,6 @@ typedef struct {
 	int n;
 } Training_Data;
 
-// TODO: Change activation functions to vectorized form.
 typedef struct {
 	int layers_num;
 	int max_layer_size;
@@ -95,7 +90,6 @@ typedef struct {
 	Matrix* weight_matrices;
 	// Has (layers_num) elements.
 	Vector* bias_vectors;
-	//Activation_Function activation_function;
 	Activation_Vector_Function_Mut hidden_activation_vector_function_mut;
 	Activation_Vector_Function_Mut output_activation_vector_function_mut;
 	Neural_Real learning_rate;
@@ -132,6 +126,16 @@ Vector random_vector(int n);
 Matrix random_matrix(int rows, int cols);
 Network random_network(int layers_num, int layers_sizes[]);
 
+Neural_Real activation_function_sigmoid(Neural_Real x);
+Neural_Real activation_function_identity(Neural_Real x);
+Neural_Real activation_function_relu(Neural_Real x);
+
+void activation_vector_function_sigmoid_mut(Vector v);
+void activation_vector_function_identity_mut(Vector v);
+void activation_vector_function_relu_mut(Vector v);
+Vector activation_vector_function_softmax(Vector v);
+void activation_vector_function_softmax_mut(Vector v);
+
 void training_data_print(Training_Data d);
 
 Neural_Real neural_abs(Neural_Real x);
@@ -139,41 +143,6 @@ Neural_Real neural_abs(Neural_Real x);
 // TODO: This should be done with backpropagation, but for testing purposes of other code,
 // it is currently implemented in this slow way.
 #ifdef NEURAL_DEBUG
-void activation_vector_function_sigmoid_mut(Vector v) {
-	for(int i = 0; i < v.n; ++i)
-		v.elements[i] = (1.f / (1.f + neural_exp(-v.elements[i])));
-}
-
-void activation_vector_function_identity_mut(Vector v) {
-	(void)v;
-}
-
-void activation_vector_function_relu_mut(Vector v) {
-	for(int i = 0; i < v.n; ++i)
-		v.elements[i] = (v.elements[i] + neural_abs(v.elements[i])) * 0.5;
-}
-
-Vector softmax(Vector v) {
-	Vector result = vector_alloc(v.n);
-	Neural_Real softmax_sum = 0;
-	for(int i = 0; i < v.n; ++i) {
-		result.elements[i] = neural_exp(v.elements[i]);
-		softmax_sum += result.elements[i];
-	}
-	for(int i = 0; i < v.n; ++i) result.elements[i] /= softmax_sum;
-	return result;
-}
-
-void softmax_mut(Vector v) {
-	Neural_Real softmax_sum = 0;
-	for(int i = 0; i < v.n; ++i) {
-		v.elements[i] = neural_exp(v.elements[i]);
-		softmax_sum += v.elements[i];
-	}
-	for(int i = 0; i < v.n; ++i) v.elements[i] /= softmax_sum;
-}
-
-// TODO: Change activation functions to vectorized form.
 Vector network_cost_gradient(Network* n, Training_Data d) {
 	Neural_Real temp = 0;
 	Neural_Real base_cost = network_cost(n, d);
@@ -217,18 +186,6 @@ void apply_gradient(Network* n, Vector gradient) {
 #endif // NEURAL_H
 
 #ifdef NEURAL_IMPLEMENTATION
-
-Neural_Real activation_function_sigmoid(Neural_Real x) {
-	return 1.f / (1.f + neural_exp(-x));
-}
-
-Neural_Real activation_function_identity(Neural_Real x) {
-	return x;
-}
-
-Neural_Real activation_function_relu(Neural_Real x) {
-	return (x + neural_abs(x)) * 0.5;
-}
 
 Vector vector_alloc(int n) {
 	return (Vector) {
@@ -326,8 +283,6 @@ Network network_alloc(int layers_num, int layers_sizes[]) {
 	n.layers_sizes = NEURAL_CALLOC(layers_num + 1, sizeof(n.layers_sizes[0]));
 	n.weight_matrices = NEURAL_CALLOC(layers_num, sizeof(Matrix));
 	n.bias_vectors = NEURAL_CALLOC(layers_num, sizeof(Vector));
-	//n.activation_function = activation_function_sigmoid;
-	//n.output_activation_function_mut = activation_vector_function_sigmoid_mut;
 	n.hidden_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
 	n.output_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
 	n.learning_rate = NEURAL_DEFAULT_LEARNING_RATE;
@@ -365,7 +320,6 @@ void network_free(Network* n) {
 	n->layers_sizes = 0;
 	n->layers_num = 0;
 	n->max_layer_size = 0;
-	//n->activation_function = activation_function_sigmoid;
 	n->hidden_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
 	n->output_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
 	n->learning_rate = NEURAL_DEFAULT_LEARNING_RATE;
@@ -392,7 +346,6 @@ Vector network_create_input_vector(Network n, Neural_Real elements[]) {
 	return v;
 }
 
-// TODO: Change activation functions to vectorized form.
 Vector network_forward(Network* n, Vector v_orig) {
 	// TODO: This must be less dumb.
 	Vector v = vector_alloc(v_orig.n);
@@ -403,7 +356,6 @@ Vector network_forward(Network* n, Vector v_orig) {
 		vector_elements(&v, temp.elements);
 		v.n = n->weight_matrices[i].rows;
 		vector_add(v, n->bias_vectors[i], &v);
-		//vector_apply_activation_function(&v, n->activation_function);
 		n->hidden_activation_vector_function_mut(v);
 	}
 
@@ -445,7 +397,6 @@ void network_print(Network n) {
 	printf("Number of parameters: %d\n", n.number_of_parameters);
 	printf("Learning rate: "NEURAL_REAL_PRINT_TYPE"\n", n.learning_rate);
 	printf("Eps: "NEURAL_REAL_PRINT_TYPE"\n", n.eps);
-	//printf("Activation function: "NEURAL_REAL_PRINT_TYPE"\n", n.eps);
 	for(int i = 0; i < n.layers_num; ++i) {
 		printf("Layer %d: ==============================\n", i);
 		printf("Weights:\n");
@@ -483,6 +434,52 @@ Network random_network(int layers_num, int layers_sizes[]) {
 			n.bias_vectors[i].elements[j] = random_neural_real();
 	}
 	return n;
+}
+
+Neural_Real activation_function_sigmoid(Neural_Real x) {
+	return 1.f / (1.f + neural_exp(-x));
+}
+
+Neural_Real activation_function_identity(Neural_Real x) {
+	return x;
+}
+
+Neural_Real activation_function_relu(Neural_Real x) {
+	return (x + neural_abs(x)) * 0.5;
+}
+
+void activation_vector_function_sigmoid_mut(Vector v) {
+	for(int i = 0; i < v.n; ++i)
+		v.elements[i] = (1.f / (1.f + neural_exp(-v.elements[i])));
+}
+
+void activation_vector_function_identity_mut(Vector v) {
+	(void)v;
+}
+
+void activation_vector_function_relu_mut(Vector v) {
+	for(int i = 0; i < v.n; ++i)
+		v.elements[i] = (v.elements[i] + neural_abs(v.elements[i])) * 0.5;
+}
+
+Vector activation_vector_function_softmax(Vector v) {
+	Vector result = vector_alloc(v.n);
+	Neural_Real softmax_sum = 0;
+	for(int i = 0; i < v.n; ++i) {
+		result.elements[i] = neural_exp(v.elements[i]);
+		softmax_sum += result.elements[i];
+	}
+	for(int i = 0; i < v.n; ++i) result.elements[i] /= softmax_sum;
+	return result;
+}
+
+void activation_vector_function_softmax_mut(Vector v) {
+	Neural_Real softmax_sum = 0;
+	for(int i = 0; i < v.n; ++i) {
+		v.elements[i] = neural_exp(v.elements[i]);
+		softmax_sum += v.elements[i];
+	}
+	for(int i = 0; i < v.n; ++i) v.elements[i] /= softmax_sum;
 }
 
 void training_data_print(Training_Data d) {
