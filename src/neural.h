@@ -348,6 +348,7 @@ Vector network_create_input_vector(Network n, Neural_Real elements[]) {
 	return v;
 }
 
+// This function returns vector that must be freed.
 Vector network_forward(Network* n, Vector v_orig) {
 	// TODO: This must be less dumb.
 	Vector v = vector_alloc(v_orig.n);
@@ -379,6 +380,7 @@ Neural_Real network_cost(Network* n, Training_Data d) {
 			Neural_Real dist = (actual_output.elements[j] - d.samples[i].output.elements[j]);
 			sum += dist*dist;
 		}
+		vector_free(&actual_output);
 	}
 	return sum / d.n;
 }
