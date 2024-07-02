@@ -1,6 +1,8 @@
 #ifndef NEURAL_H
 #define NEURAL_H
 
+// TODO: Fix memory leak.
+
 // TODO: Backpropagation.
 // TODO: Network to file serialization.
 // TODO: Network loading from file.

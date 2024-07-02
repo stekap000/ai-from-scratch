@@ -136,8 +136,7 @@ void example_iris() {
 
 	printf("\nCOST BEFORE: %f\n", network_cost(&iris, data));
 
-	// TODO: Weird behaviour for larger values (check for memory leak).
-	for(int i = 0; i < 300; ++i) {
+	for(int i = 0; i < 10000; ++i) {
 		Vector g = network_cost_gradient(&iris, data);
 		apply_gradient(&iris, g);
 		vector_free(&g);
