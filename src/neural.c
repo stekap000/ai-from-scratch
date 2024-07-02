@@ -131,7 +131,7 @@ void example_iris() {
 	Network iris = random_network(3, (int[]){4, 5, 3, 3});
 	iris.learning_rate = 1e-1;
 	iris.eps = 1e-1;
-	iris.output_activation_function_mut = softmax_mut;
+	iris.output_activation_vector_function_mut = softmax_mut;
 	network_print(iris);
 
 	printf("\nCOST BEFORE: %f\n", network_cost(&iris, data));

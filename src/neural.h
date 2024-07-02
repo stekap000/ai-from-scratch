@@ -66,7 +66,7 @@ typedef struct {
 } Matrix;
 
 typedef Neural_Real (*Activation_Function) (Neural_Real);
-typedef void (*Activation_Function_Vector_Mut) (Vector);
+typedef void (*Activation_Vector_Function_Mut) (Vector);
 
 Neural_Real activation_function_sigmoid(Neural_Real x);
 Neural_Real activation_function_identity(Neural_Real x);
@@ -95,8 +95,9 @@ typedef struct {
 	Matrix* weight_matrices;
 	// Has (layers_num) elements.
 	Vector* bias_vectors;
-	Activation_Function activation_function;
-	Activation_Function_Vector_Mut output_activation_function_mut;
+	//Activation_Function activation_function;
+	Activation_Vector_Function_Mut hidden_activation_vector_function_mut;
+	Activation_Vector_Function_Mut output_activation_vector_function_mut;
 	Neural_Real learning_rate;
 	Neural_Real eps;
 	int number_of_parameters;
@@ -138,9 +139,18 @@ Neural_Real neural_abs(Neural_Real x);
 // TODO: This should be done with backpropagation, but for testing purposes of other code,
 // it is currently implemented in this slow way.
 #ifdef NEURAL_DEBUG
-void activation_function_sigmoid_vector_mut(Vector v) {
+void activation_vector_function_sigmoid_mut(Vector v) {
 	for(int i = 0; i < v.n; ++i)
 		v.elements[i] = (1.f / (1.f + neural_exp(-v.elements[i])));
+}
+
+void activation_vector_function_identity_mut(Vector v) {
+	(void)v;
+}
+
+void activation_vector_function_relu_mut(Vector v) {
+	for(int i = 0; i < v.n; ++i)
+		v.elements[i] = (v.elements[i] + neural_abs(v.elements[i])) * 0.5;
 }
 
 Vector softmax(Vector v) {
@@ -316,8 +326,10 @@ Network network_alloc(int layers_num, int layers_sizes[]) {
 	n.layers_sizes = NEURAL_CALLOC(layers_num + 1, sizeof(n.layers_sizes[0]));
 	n.weight_matrices = NEURAL_CALLOC(layers_num, sizeof(Matrix));
 	n.bias_vectors = NEURAL_CALLOC(layers_num, sizeof(Vector));
-	n.activation_function = activation_function_sigmoid;
-	n.output_activation_function_mut = activation_function_sigmoid_vector_mut;
+	//n.activation_function = activation_function_sigmoid;
+	//n.output_activation_function_mut = activation_vector_function_sigmoid_mut;
+	n.hidden_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
+	n.output_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
 	n.learning_rate = NEURAL_DEFAULT_LEARNING_RATE;
 	n.eps = NEURAL_DEFAULT_EPS;
 	n.number_of_parameters = 0;
@@ -353,7 +365,9 @@ void network_free(Network* n) {
 	n->layers_sizes = 0;
 	n->layers_num = 0;
 	n->max_layer_size = 0;
-	n->activation_function = activation_function_sigmoid;
+	//n->activation_function = activation_function_sigmoid;
+	n->hidden_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
+	n->output_activation_vector_function_mut = activation_vector_function_sigmoid_mut;
 	n->learning_rate = NEURAL_DEFAULT_LEARNING_RATE;
 	n->eps = NEURAL_DEFAULT_EPS;
 	n->number_of_parameters = 0;
@@ -389,14 +403,15 @@ Vector network_forward(Network* n, Vector v_orig) {
 		vector_elements(&v, temp.elements);
 		v.n = n->weight_matrices[i].rows;
 		vector_add(v, n->bias_vectors[i], &v);
-		vector_apply_activation_function(&v, n->activation_function);
+		//vector_apply_activation_function(&v, n->activation_function);
+		n->hidden_activation_vector_function_mut(v);
 	}
 
 	matrix_vector_mul(n->weight_matrices[n->layers_num - 1], v, &temp);
 	vector_elements(&v, temp.elements);
 	v.n = n->weight_matrices[n->layers_num - 1].rows;
 	vector_add(v, n->bias_vectors[n->layers_num - 1], &v);
-	n->output_activation_function_mut(v);
+	n->output_activation_vector_function_mut(v);
 	
 	vector_free(&temp);
 	return v;
