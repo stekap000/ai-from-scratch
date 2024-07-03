@@ -131,13 +131,12 @@ void example_iris() {
 	Network iris = random_network(3, (int[]){4, 5, 3, 3});
 	iris.learning_rate = 1e-1;
 	iris.eps = 1e-1;
-	iris.output_activation_function_mut = softmax_mut;
+	iris.output_activation_vector_function_mut = activation_vector_function_softmax_mut;
 	network_print(iris);
 
 	printf("\nCOST BEFORE: %f\n", network_cost(&iris, data));
 
-	// TODO: Weird behaviour for larger values (check for memory leak).
-	for(int i = 0; i < 300; ++i) {
+	for(int i = 0; i < 100; ++i) {
 		Vector g = network_cost_gradient(&iris, data);
 		apply_gradient(&iris, g);
 		vector_free(&g);
@@ -155,8 +154,19 @@ void example_iris() {
 int main(void) {
 	srand(time(0));
 
-	example_xor();
-	//example_iris();
+	//example_xor();
+	example_iris();
 
+	//Network n = random_network(3, (int[]){4, 5, 3, 3});
+	//Vector input = network_create_input_vector(n, (Neural_Real[]){1, 2, 3, 4});
+	//
+	//for(int i = 0; i < 10000000; ++i) {
+	//	Vector v = network_forward(&n, input);
+	//	vector_free(&v);
+	//}
+	//
+	//vector_free(&input);
+	//network_free(&n);
+	
 	return 0;
 }
